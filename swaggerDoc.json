@@ -1,0 +1,17 @@
+{
+  "documentation": {
+    "info": {
+      "title": "Booking Pal Service",
+      "description": "Booking Pal API Documentation for frontend clients",
+      "version": "0.0.1",
+      "contact": {
+        "name": "Booking Pal",
+        "url": "https://www.lilanga.me"
+      },
+      "license": {
+        "name": "MIT",
+        "url": "http://opensource.org/licenses/MIT"
+      }
+    }
+  }
+}
