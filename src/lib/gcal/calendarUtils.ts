@@ -2,130 +2,16 @@ import * as fs from "fs";
 import * as path from "path";
 import * as readline from "readline";
 import * as googleAuth from "google-auth-library";
+import { CalendarClient } from "./calendarClient";
+import { getCalendarCredentials, updateCalendarCredentials } from "../db/dbHelper";
+import {
+  GoogleAppToken,
+  GoogleCalendarCredentials,
+  GoogleClientSecret,
+} from "./types";
 
-const CREDENTIALS_DIR = path.resolve(__dirname, "./credentials");
-const CONFIG_DIR = path.resolve(__dirname, "./config");
-const API_TOKEN = path.resolve(CREDENTIALS_DIR, "token.json");
-const RUNTIME_TOKEN = path.resolve(CREDENTIALS_DIR, "dynamic_app_token.json");
-const GOOGLE_CLIENT_SECRET = path.resolve(CONFIG_DIR, "client_secret.json");
+const CONFIG_DIR = path.resolve(import.meta.dir, "./config");
 const CALENDAR_CONFIG = path.resolve(CONFIG_DIR, "calendar.json");
-
-function readCredentials(): Promise<any> {
-  return new Promise((resolve, reject) => {
-    fs.readFile(GOOGLE_CLIENT_SECRET, (err, content) => {
-      if (err) {
-        reject(err);
-      } else {
-        resolve(JSON.parse(content.toString()));
-      }
-    });
-  });
-}
-
-function askForOauthToken(): Promise<string> {
-  return new Promise((resolve) => {
-    const rl = readline.createInterface({
-      input: process.stdin,
-      output: process.stdout,
-    });
-
-    rl.question("Enter the obtained API token: ", (answer) => {
-      rl.close();
-      resolve(answer);
-    });
-  });
-}
-
-function oauth2TokenInstructions(
-  oauth2Client: googleAuth.OAuth2Client,
-): Promise<string> {
-  const authUrl = oauth2Client.generateAuthUrl({
-    access_type: "offline",
-    scope: ["https://www.googleapis.com/auth/calendar"],
-  });
-
-  console.log(
-    "Authorize Booking Pal to access your calendar by visiting this URL: ",
-    authUrl,
-  );
-
-  return askForOauthToken().then((token) => {
-    createDirectory(CREDENTIALS_DIR);
-    return new Promise<string>((resolve, reject) => {
-      fs.writeFile(API_TOKEN, token, (error) => {
-        if (error) {
-          reject(error);
-        } else {
-          resolve(token);
-        }
-      });
-    });
-  });
-}
-
-function createDirectory(directory: string): void {
-  try {
-    fs.mkdirSync(directory);
-  } catch (err: any) {
-    if (err.code !== "EEXIST") {
-      throw err;
-    }
-  }
-}
-
-function storeToken(token: any): void {
-  createDirectory(CREDENTIALS_DIR);
-  fs.writeFile(RUNTIME_TOKEN, JSON.stringify(token), (err) => {
-    if (err) {
-      console.log(err);
-    }
-  });
-}
-
-function getAccessToken(
-  client: googleAuth.OAuth2Client,
-  codebuffer: Buffer,
-): Promise<any> {
-  return new Promise((resolve, reject) => {
-    const code = codebuffer.toString();
-    client.getToken(code, (err: Error | null, token: any) => {
-      if (err) {
-        console.log(
-          "Error while trying to retrieve access token with code",
-          code,
-          err,
-        );
-        return reject(err);
-      }
-
-      storeToken(token);
-      resolve(token);
-    });
-  });
-}
-
-function readOauth2Token(oauth2Client: googleAuth.OAuth2Client): Promise<any> {
-  return new Promise((resolve, reject) => {
-    fs.readFile(RUNTIME_TOKEN, (err, tokenBuffer) => {
-      if (err) {
-        fs.readFile(API_TOKEN, (err, codeBuffer) => {
-          if (err) {
-            return oauth2TokenInstructions(oauth2Client)
-              .then((code) => getAccessToken(oauth2Client, Buffer.from(code)))
-              .then((token) => resolve(token))
-              .catch((error) => reject(error));
-          } else {
-            getAccessToken(oauth2Client, codeBuffer)
-              .then((token) => resolve(token))
-              .catch((error) => reject(error));
-          }
-        });
-      } else {
-        resolve(JSON.parse(tokenBuffer.toString()));
-      }
-    });
-  });
-}
 
 function readConfigurationFile(): Promise<any> {
   return new Promise((resolve, reject) => {
@@ -187,4 +73,82 @@ function readConfiguration(): Promise<any> {
   });
 }
 
-export { readConfiguration, readCredentials, readOauth2Token };
+function getAuth2TokenInstructions(
+  oauth2Client: googleAuth.OAuth2Client,
+): string {
+  return oauth2Client.generateAuthUrl({
+    access_type: "offline",
+    scope: ["https://www.googleapis.com/auth/calendar"],
+  })
+}
+
+function fetchAccessToken(
+  client: googleAuth.OAuth2Client,
+  code: string,
+): Promise<GoogleAppToken> {
+  return new Promise((resolve, reject) => {
+    client.getToken(code, (err: Error | null, token?: googleAuth.Credentials | null) => {
+      if (err) {
+        console.log(
+          "Error while trying to retrieve access token with code",
+          code,
+          err,
+        );
+        return reject(err);
+      }
+      resolve(token as GoogleAppToken);
+    });
+  });
+}
+
+function getOauth2Token(
+  oauth2Client: googleAuth.OAuth2Client,
+  calendarCredentials: GoogleCalendarCredentials,
+): Promise<GoogleAppToken> {
+  const appToken = calendarCredentials?.appToken as unknown as GoogleAppToken;
+  if (appToken && appToken.expiry_date > Date.now()) {
+    return Promise.resolve(appToken);
+  }
+
+  return new Promise((resolve, reject) => {
+    // fetch new token if expired and update the db
+    fetchAccessToken(oauth2Client, calendarCredentials?.authToken)
+      .then((token) => {
+        updateCalendarCredentials(calendarCredentials?.id, token).then(() => {
+          
+        resolve(token);
+      }).catch((error) => {console.log(error); reject(error);});
+      })
+      .catch((error) => {
+        console.log('Please update the auth token in db visiting this URL:');
+        console.log(getAuth2TokenInstructions(oauth2Client));
+        reject(error);
+      }); //TODO: handle to update token in db if expired, and then resolve. REF: oauth2TokenInstructions
+  });
+}
+
+async function getOAuthClientByCalendarId(
+  calendarId: string,
+): Promise<CalendarClient> {
+  const calendarCredentials = await getCalendarCredentials(calendarId);
+  const credentials = calendarCredentials
+    ?.clientSecret as unknown as GoogleClientSecret; // await readCredentials();
+  const clientSecret = credentials.installed.client_secret;
+  const clientId = credentials.installed.client_id;
+  const redirectUrl = credentials.installed.redirect_uris[0];
+  const oauth2Client = new googleAuth.OAuth2Client(
+    clientId,
+    clientSecret,
+    redirectUrl,
+  );
+
+  const token = await getOauth2Token(oauth2Client, calendarCredentials as unknown as GoogleCalendarCredentials);
+  oauth2Client.credentials = token;
+
+  return new CalendarClient(calendarId, oauth2Client);
+}
+
+export {
+  getOAuthClientByCalendarId,
+  readConfiguration,
+};

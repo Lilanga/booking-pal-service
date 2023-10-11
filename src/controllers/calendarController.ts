@@ -6,25 +6,29 @@ const { calendar_id } = await readConfiguration();
 const googleCalendar = new GoogleCalendar(calendar_id);
 const calendarClient = await googleCalendar.authorize();
 
-const getEvents = async (): Promise<CalendarEvent[]> => {
+const getEvents = async (
+    { params: { calendarId } }: { params: { calendarId: string } },
+): Promise<CalendarEvent[]> => {
   const events = await calendarClient.getEvents();
   return events;
 };
 
-const getCurrentEverntItem = async (): Promise<CalendarEvent | {}> => {
+const getCurrentEverntItem = async (
+    { params: { calendarId } }: { params: { calendarId: string } },
+): Promise<CalendarEvent | {}> => {
   const event = await calendarClient.currentEvent();
   return event;
 };
 
 const createEvent = async (
-  { params: { duration } }: { params: { duration?: string } },
+  { params: { calendarId, duration } }: { params: { calendarId: string, duration?: string } },
 ): Promise<CalendarEvent[]> => {
   const events = await calendarClient.createEvent(parseInt(duration || "15"));
   return events;
 };
 
 const completeEvent = async (
-  { params: { eventId } }: { params: { eventId: string } },
+  { params: { calendarId, eventId } }: { params: { calendarId: string, eventId: string } },
 ): Promise<CalendarEvent[]> => {
   const events = await calendarClient.CompleteEvent(eventId);
   return events;
