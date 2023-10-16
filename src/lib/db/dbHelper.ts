@@ -60,3 +60,18 @@ export async function updateCalendarCredentials(
   });
   return updatedCalendar;
 }
+
+export async function updateCalendarAuthToken(
+  credentialID: number,
+  authToken: string,
+): Promise<CalendarCredentials | null> {
+  const updatedCalendar = await prisma.calendarCredentials.update({
+    where: {
+      id: credentialID,
+    },
+    data: {
+      authToken: authToken,
+    },
+  });
+  return updatedCalendar;
+}

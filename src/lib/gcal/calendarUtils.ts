@@ -75,10 +75,13 @@ function readConfiguration(): Promise<any> {
 
 function getAuth2TokenInstructions(
   oauth2Client: googleAuth.OAuth2Client,
+  credentialsId: number,
 ): string {
   return oauth2Client.generateAuthUrl({
     access_type: "offline",
     scope: ["https://www.googleapis.com/auth/calendar"],
+    redirect_uri: process.env.SERVICE_URL + "/oauth2callback",
+    state: credentialsId.toString(),
   })
 }
 
@@ -117,11 +120,11 @@ function getOauth2Token(
         updateCalendarCredentials(calendarCredentials?.id, token).then(() => {
           
         resolve(token);
-      }).catch((error) => {console.log(error); reject(error);});
+      }).catch((error) => { reject(error); });
       })
       .catch((error) => {
         console.log('Please update the auth token in db visiting this URL:');
-        console.log(getAuth2TokenInstructions(oauth2Client));
+        console.log(getAuth2TokenInstructions(oauth2Client,calendarCredentials.id));
         reject(error);
       }); //TODO: handle to update token in db if expired, and then resolve. REF: oauth2TokenInstructions
   });
@@ -133,17 +136,18 @@ async function getOAuthClientByCalendarId(
   const calendarCredentials = await getCalendarCredentials(calendarId);
   const credentials = calendarCredentials
     ?.clientSecret as unknown as GoogleClientSecret; // await readCredentials();
-  const clientSecret = credentials.installed.client_secret;
-  const clientId = credentials.installed.client_id;
-  const redirectUrl = credentials.installed.redirect_uris[0];
+  const clientSecret = credentials.web.client_secret;
+  const clientId = credentials.web.client_id;
+  const redirectUrl = credentials.web.redirect_uris[0];
   const oauth2Client = new googleAuth.OAuth2Client(
     clientId,
     clientSecret,
     redirectUrl,
   );
 
-  const token = await getOauth2Token(oauth2Client, calendarCredentials as unknown as GoogleCalendarCredentials);
-  oauth2Client.credentials = token;
+  const token = getOauth2Token(oauth2Client, calendarCredentials as unknown as GoogleCalendarCredentials).then((token) => {
+    oauth2Client.credentials = token;
+  }).catch((error) => {console.log('error occured');}); //TODO: handle to update token in db if expired, and then resolve. REF: oauth2TokenInstructions
 
   return new CalendarClient(calendarId, oauth2Client);
 }

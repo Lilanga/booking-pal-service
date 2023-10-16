@@ -6,6 +6,7 @@ import {
   getAllEvents,
   getCurrentEvent,
 } from "./controllers/calendarController";
+import { updateCalendarCredentialsAuthToken } from "./controllers/authController";
 const swaggerDocument = require("../swaggerDoc.json");
 
 const app = new Elysia().use(swagger(swaggerDocument));
@@ -17,6 +18,8 @@ app.group("/api/v1/calendar/:calendarId", (app) =>
     .post("/createEvent/:duration", createCalendarEvent.method, createCalendarEvent.description)
     .put("/completeEvent/:eventId", completeCalendarEvent.method, completeCalendarEvent.description)
   );
+
+app.get("/oauth2callback", updateCalendarCredentialsAuthToken.method, updateCalendarCredentialsAuthToken.description);
 
 app.listen(process.env.PORT || 3000, () => {
   console.log(`🦊 Booking-Pal service is running at ${app.server?.port}`);
