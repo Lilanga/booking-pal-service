@@ -1,36 +1,39 @@
-import { GoogleCalendar } from "../lib/gcal";
-import { readConfiguration } from "../lib/gcal/calendarUtils";
+import { getGoogleCalendar } from "../lib/gcal";
 import { CalendarEvent } from "../lib/gcal/types";
 
-const { calendar_id } = await readConfiguration();
-const googleCalendar = new GoogleCalendar(calendar_id);
-const calendarClient = await googleCalendar.authorize();
+// const { calendar_id } = await readConfiguration();
+// const googleCalendar = new GoogleCalendar(calendar_id);
+// const calendarClient = await googleCalendar.authorize();
 
 const getEvents = async (
     { params: { calendarId } }: { params: { calendarId: string } },
 ): Promise<CalendarEvent[]> => {
-  const events = await calendarClient.getEvents();
+  const googleCalendar = await getGoogleCalendar(calendarId);
+  const events = await googleCalendar.calendarClient.getEvents();
   return events;
 };
 
 const getCurrentEverntItem = async (
     { params: { calendarId } }: { params: { calendarId: string } },
 ): Promise<CalendarEvent | {}> => {
-  const event = await calendarClient.currentEvent();
+  const googleCalendar = await getGoogleCalendar(calendarId);
+  const event = await googleCalendar.calendarClient.currentEvent();
   return event;
 };
 
 const createEvent = async (
   { params: { calendarId, duration } }: { params: { calendarId: string, duration?: string } },
 ): Promise<CalendarEvent[]> => {
-  const events = await calendarClient.createEvent(parseInt(duration || "15"));
+  const googleCalendar = await getGoogleCalendar(calendarId);
+  const events = await googleCalendar.calendarClient.createEvent(parseInt(duration || "15"));
   return events;
 };
 
 const completeEvent = async (
   { params: { calendarId, eventId } }: { params: { calendarId: string, eventId: string } },
 ): Promise<CalendarEvent[]> => {
-  const events = await calendarClient.CompleteEvent(eventId);
+  const googleCalendar = await getGoogleCalendar(calendarId);
+  const events = await googleCalendar.calendarClient.CompleteEvent(eventId);
   return events;
 };
 

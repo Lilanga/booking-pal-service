@@ -135,7 +135,7 @@ async function getOAuthClientByCalendarId(
 ): Promise<CalendarClient> {
   const calendarCredentials = await getCalendarCredentials(calendarId);
   const credentials = calendarCredentials
-    ?.clientSecret as unknown as GoogleClientSecret; // await readCredentials();
+    ?.clientSecret as unknown as GoogleClientSecret;
   const clientSecret = credentials.web.client_secret;
   const clientId = credentials.web.client_id;
   const redirectUrl = credentials.web.redirect_uris[0];

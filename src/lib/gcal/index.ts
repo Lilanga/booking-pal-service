@@ -1,23 +1,29 @@
-import * as googleAuth from "google-auth-library";
 import { CalendarClient } from "./calendarClient";
 import { getOAuthClientByCalendarId } from "./calendarUtils";
-import { getCalendarCredentials } from "../db/dbHelper";
-import { GoogleClientSecret } from "./types";
-
-let _calendarId: string;
 
 export class GoogleCalendar {
+  calendarId: string;
+  calendarClient: CalendarClient;
+
   constructor(calendarId: string) {
-    _calendarId = calendarId;
+    this.calendarId = calendarId;
+    this.calendarClient = undefined as unknown as CalendarClient;
   }
 
   async authorize(): Promise<CalendarClient> {
     try {
-      const calendarClient = await getOAuthClientByCalendarId(_calendarId);
-      return calendarClient;
+      this.calendarClient = await getOAuthClientByCalendarId(this.calendarId);
+      return this.calendarClient;
     } catch (error) {
       console.error(error);
       process.exit(1);
     }
   }
+}
+
+export async function getGoogleCalendar(calendarId: string): Promise<GoogleCalendar> {
+
+  const calendarClient = new GoogleCalendar(decodeURIComponent(calendarId));
+  await calendarClient.authorize();
+  return calendarClient;
 }
