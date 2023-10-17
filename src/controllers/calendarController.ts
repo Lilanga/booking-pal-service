@@ -1,9 +1,6 @@
+import { verifyApiToken } from "../lib/auth";
 import { getGoogleCalendar } from "../lib/gcal";
 import { CalendarEvent } from "../lib/gcal/types";
-
-// const { calendar_id } = await readConfiguration();
-// const googleCalendar = new GoogleCalendar(calendar_id);
-// const calendarClient = await googleCalendar.authorize();
 
 const getEvents = async (
     { params: { calendarId } }: { params: { calendarId: string } },
@@ -39,7 +36,8 @@ const completeEvent = async (
 
 export const getAllEvents = {
   method: getEvents,
-  description: {
+  hooks: {
+    beforeHandle: verifyApiToken,
     detail: {
       tags: ["calendar"],
       summary: "Get all calendar events",

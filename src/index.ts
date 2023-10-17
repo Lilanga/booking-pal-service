@@ -12,8 +12,15 @@ const swaggerDocument = require("../swaggerDoc.json");
 const app = new Elysia().use(swagger(swaggerDocument));
 
 app.group("/api/v1/calendar/:calendarId", (app) =>
+  app.derive(({ request: { headers } }) => {
+    return {
+        apiKey: headers.get('x-api-key')
+    }
+}));
+
+app.group("/api/v1/calendar/:calendarId", (app) =>
   app
-    .get("/events", getAllEvents.method, getAllEvents.description)
+    .get("/events", getAllEvents.method, getAllEvents.hooks)
     .get("/currentEvent", getCurrentEvent.method, getCurrentEvent.description)
     .post("/createEvent/:duration", createCalendarEvent.method, createCalendarEvent.description)
     .put("/completeEvent/:eventId", completeCalendarEvent.method, completeCalendarEvent.description)
