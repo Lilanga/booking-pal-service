@@ -1,43 +1,47 @@
-import { verifyApiToken } from "../lib/auth";
 import { getGoogleCalendar } from "../lib/gcal";
 import { CalendarEvent } from "../lib/gcal/types";
+import { APIContext } from "./types";
+import { validateApiKey } from "../utils/controllerUtils";
 
-const getEvents = async (
-    { params: { calendarId } }: { params: { calendarId: string } },
-): Promise<CalendarEvent[]> => {
-  const googleCalendar = await getGoogleCalendar(calendarId);
+const getAllCalendarEvents = async (
+    context: APIContext,
+): Promise<CalendarEvent[] | string> => {
+  await validateApiKey(context);
+  const googleCalendar = await getGoogleCalendar(context.params.calendarId ?? "");
   const events = await googleCalendar.calendarClient.getEvents();
   return events;
 };
 
 const getCurrentEverntItem = async (
-    { params: { calendarId } }: { params: { calendarId: string } },
+  context: APIContext,
 ): Promise<CalendarEvent | {}> => {
-  const googleCalendar = await getGoogleCalendar(calendarId);
+  await validateApiKey(context);
+  const googleCalendar = await getGoogleCalendar(context.params.calendarId ?? "");
   const event = await googleCalendar.calendarClient.currentEvent();
   return event;
 };
 
 const createEvent = async (
-  { params: { calendarId, duration } }: { params: { calendarId: string, duration?: string } },
+  context: APIContext,
 ): Promise<CalendarEvent[]> => {
-  const googleCalendar = await getGoogleCalendar(calendarId);
-  const events = await googleCalendar.calendarClient.createEvent(parseInt(duration || "15"));
+  await validateApiKey(context);
+  const googleCalendar = await getGoogleCalendar(context.params.calendarId ?? "");
+  const events = await googleCalendar.calendarClient.createEvent(parseInt(context.params.duration || "15"));
   return events;
 };
 
 const completeEvent = async (
-  { params: { calendarId, eventId } }: { params: { calendarId: string, eventId: string } },
+  context: APIContext,
 ): Promise<CalendarEvent[]> => {
-  const googleCalendar = await getGoogleCalendar(calendarId);
-  const events = await googleCalendar.calendarClient.CompleteEvent(eventId);
+  await validateApiKey(context);
+  const googleCalendar = await getGoogleCalendar(context.params.calendarId?? "");
+  const events = await googleCalendar.calendarClient.CompleteEvent(context.params.eventId ?? "");
   return events;
 };
 
 export const getAllEvents = {
-  method: getEvents,
+  method: getAllCalendarEvents,
   hooks: {
-    beforeHandle: verifyApiToken,
     detail: {
       tags: ["calendar"],
       summary: "Get all calendar events",
@@ -48,7 +52,7 @@ export const getAllEvents = {
 
 export const getCurrentEvent = {
   method: getCurrentEverntItem,
-  description: {
+  hooks: {
     detail: {
       tags: ["calendar"],
       summary: "Get current calendar event",
@@ -59,7 +63,7 @@ export const getCurrentEvent = {
 
 export const createCalendarEvent = {
   method: createEvent,
-  description: {
+  hooks: {
     detail: {
       tags: ["calendar"],
       summary: "Create calendar event",
@@ -71,7 +75,7 @@ export const createCalendarEvent = {
 
 export const completeCalendarEvent = {
   method: completeEvent,
-  description: {
+  hooks: {
     detail: {
       tags: ["calendar"],
       summary: "Complete calendar event",

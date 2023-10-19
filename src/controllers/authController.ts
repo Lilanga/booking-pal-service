@@ -1,4 +1,4 @@
-import { updateCalendarAuthToken } from "../lib/db/dbHelper";
+import { updateCalendarAuthToken } from "../lib/db";
 
 const updateCalendarCredentialsToken = async (
   { query: { code, state } }: { query: { code?: string; state?: string } },

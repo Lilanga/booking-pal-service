@@ -3,7 +3,7 @@ import * as path from "path";
 import * as readline from "readline";
 import * as googleAuth from "google-auth-library";
 import { CalendarClient } from "./calendarClient";
-import { getCalendarCredentials, updateCalendarCredentials } from "../db/dbHelper";
+import { getCalendarCredentials, updateCalendarCredentials } from "../db";
 import {
   GoogleAppToken,
   GoogleCalendarCredentials,

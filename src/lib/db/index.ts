@@ -19,10 +19,12 @@ export async function getCalendarDetail(
 
 export async function getCalendarDetailWithCredentials(
   calendarId: string,
+  apiKey: string,
 ): Promise<CalendarDetails | null> {
   const calendar = await prisma.calendarDetails.findUnique({
     where: {
       calendarID: calendarId,
+      apiKey: apiKey,
     },
     include: {
       credential: true,
