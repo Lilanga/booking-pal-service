@@ -17,3 +17,13 @@ export class ApiAuthError extends Error {
       this.status = status
     }
   }
+
+export class ApiTokenExpiredError extends Error {
+    constructor(
+      readonly message: string,
+      readonly status: number = 412,
+    ) {
+      super(message)
+      this.status = status
+    }
+  }

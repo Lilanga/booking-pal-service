@@ -9,17 +9,30 @@ import {
 import { updateCalendarCredentialsAuthToken } from "./controllers/authController";
 import { verifyApiToken } from "./lib/auth";
 import { getCalendarDetailWithCredentials } from "./lib/db";
-import { ApiAuthError } from "./controllers/types";
+import { ApiAuthError, ApiTokenExpiredError } from "./controllers/types";
 const swaggerDocument = require("../swaggerDoc.json");
 
 const app = new Elysia().use(swagger(swaggerDocument));
 
 app
-  .error({ API_AUTH_ERROR: ApiAuthError })
+  .error({ API_AUTH_ERROR: ApiAuthError, TOKEN_EXPIRED: ApiTokenExpiredError })
   .onError(({ code, error }) => {
     if (code === "API_AUTH_ERROR") {
       return new Response(error.message, {
         status: error.status,
+      });
+
+    } else if (code === "TOKEN_EXPIRED") {
+      const body = JSON.stringify({
+        message: "Token expired, please re-authenticate.",
+        redirectUrl: error.message,
+      });
+      
+      return new Response(body, {
+        status: error.status,
+        headers: {
+          "content-type": "application/json;charset=UTF-8",
+        },
       });
     }
   });

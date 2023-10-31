@@ -9,6 +9,7 @@ import {
   GoogleCalendarCredentials,
   GoogleClientSecret,
 } from "./types";
+import { ApiTokenExpiredError } from "../../controllers/types";
 
 const CONFIG_DIR = path.resolve(import.meta.dir, "./config");
 const CALENDAR_CONFIG = path.resolve(CONFIG_DIR, "calendar.json");
@@ -122,11 +123,10 @@ function getOauth2Token(
         resolve(token);
       }).catch((error) => { reject(error); });
       })
-      .catch((error) => {
-        console.log('Please update the auth token in db visiting this URL:');
-        console.log(getAuth2TokenInstructions(oauth2Client,calendarCredentials.id));
-        reject(error);
-      }); //TODO: handle to update token in db if expired, and then resolve. REF: oauth2TokenInstructions
+      .catch((_error) => {
+        const tokenError = new ApiTokenExpiredError(decodeURIComponent(getAuth2TokenInstructions(oauth2Client,calendarCredentials.id)), 412);
+        reject(tokenError);
+      }); //TODO: check error and handle to update token in db if expired, and then resolve. REF: oauth2TokenInstructions
   });
 }
 
@@ -145,9 +145,8 @@ async function getOAuthClientByCalendarId(
     redirectUrl,
   );
 
-  const token = getOauth2Token(oauth2Client, calendarCredentials as unknown as GoogleCalendarCredentials).then((token) => {
+  const token = await getOauth2Token(oauth2Client, calendarCredentials as unknown as GoogleCalendarCredentials);
     oauth2Client.credentials = token;
-  }).catch((error) => {console.log('error occured');}); //TODO: handle to update token in db if expired, and then resolve. REF: oauth2TokenInstructions
 
   return new CalendarClient(calendarId, oauth2Client);
 }
