@@ -2,6 +2,7 @@
   "name": "booking-pal-service",
   "version": "1.0.50",
   "scripts": {
+    "build": "bun build ./src/index.ts --outdir ./build --target node",
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "bun run --watch src/index.ts"
   },

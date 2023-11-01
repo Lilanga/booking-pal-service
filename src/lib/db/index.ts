@@ -1,8 +1,8 @@
 import {
   CalendarCredentials,
   CalendarDetails,
-  PrismaClient,
 } from "@prisma/client";
+import { PrismaClient } from "./client";
 import { GoogleAppToken } from "../gcal/types";
 const prisma = new PrismaClient();
 
