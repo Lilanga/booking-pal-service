@@ -1,7 +1,7 @@
-import { calendar_v3, google } from "googleapis";
+import { google } from "googleapis";
 import { CalendarEvent, Event } from "./types";
 
-const calendar = google.calendar("v3");
+let calendar = google.calendar("v3");
 const MILLISECONDS_PER_MINUTE = 60000;
 let _auth: any, _calendarID: string;
 
@@ -9,6 +9,7 @@ class CalendarClient {
   constructor(calendarID: string, auth: any) {
     _calendarID = calendarID;
     _auth = auth;
+    calendar = google.calendar({version: "v3", auth:_auth});
   }
 
   async getEvents(): Promise<CalendarEvent[]> {
@@ -16,7 +17,6 @@ class CalendarClient {
     const timeMax = new Date(new Date().setHours(23, 59, 59)).toISOString();
     return new Promise<CalendarEvent[]>((resolve, reject) => {
       calendar.events.list({
-        auth: _auth,
         calendarId: _calendarID,
         timeMin,
         timeMax,

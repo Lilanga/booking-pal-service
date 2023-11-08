@@ -6,9 +6,6 @@ import {
   getAllEvents,
   getCurrentEvent,
 } from "./controllers/calendarController";
-import { updateCalendarCredentialsAuthToken } from "./controllers/authController";
-import { verifyApiToken } from "./lib/auth";
-import { getCalendarDetailWithCredentials } from "./lib/db";
 import { ApiAuthError, ApiTokenExpiredError } from "./controllers/types";
 const swaggerDocument = require("../swaggerDoc.json");
 
@@ -51,12 +48,6 @@ app.group("/api/v1/calendar/:calendarId", (app) =>
       completeCalendarEvent.method,
       completeCalendarEvent.hooks,
     ));
-
-app.get(
-  "/oauth2callback",
-  updateCalendarCredentialsAuthToken.method,
-  updateCalendarCredentialsAuthToken.description,
-);
 
 app.listen(process.env.PORT || 3000, () => {
   console.log(`🦊 Booking-Pal service is running at ${app.server?.port}`);

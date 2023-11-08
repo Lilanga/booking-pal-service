@@ -53,38 +53,16 @@ export interface Reminders {
   useDefault: boolean;
 }
 
-export interface GoogleAppToken {
-  access_token: string;
-  refresh_token: string;
-  scope: string;
-  token_type: string;
-  expiry_date: number;
-}
-
-export interface GoogleClientSecret {
-  web: {
-    client_id: string;
-    project_id: string;
-    auth_uri: string;
-    token_uri: string;
-    auth_provider_x509_cert_url: string;
-    client_secret: string;
-    redirect_uris: string[];
-  };
-}
-
-export interface GoogleCalendarDetails {
-  calendarID: string;
-  calendarName: string;
-  apiKey: string;
-  credentialsID: number;
-}
-
-export interface GoogleCalendarCredentials {
-  id: number;
-  clientSecret: JSON;
-  authToken: string;
-  appToken: JSON;
-  createdAt: Date;
-  updatedAt: Date;
+export interface ServiceAccountKey {
+  type: string
+  project_id: string
+  private_key_id: string
+  private_key: string
+  client_email: string
+  client_id: string
+  auth_uri: string
+  token_uri: string
+  auth_provider_x509_cert_url: string
+  client_x509_cert_url: string
+  universe_domain: string
 }

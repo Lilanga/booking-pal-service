@@ -20,9 +20,7 @@ model CalendarDetails {
 
 model CalendarCredentials {
   id              Int               @id @default(autoincrement())
-  clientSecret    Json
-  authToken       String
-  appToken        Json
+  serviceAccountKey    Json
   createdAt       DateTime          @default(now())
   updatedAt       DateTime          @updatedAt
   CalendarDetails CalendarDetails[]

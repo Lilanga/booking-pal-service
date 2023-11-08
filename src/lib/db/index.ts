@@ -3,7 +3,7 @@ import {
   CalendarDetails,
 } from "@prisma/client";
 import { PrismaClient } from "./client";
-import { GoogleAppToken } from "../gcal/types";
+import { ServiceAccountKey } from "../gcal/types";
 const prisma = new PrismaClient();
 
 export async function getCalendarDetail(
@@ -50,29 +50,14 @@ export async function getCalendarCredentials(
 
 export async function updateCalendarCredentials(
   credentialID: number,
-  appToken: GoogleAppToken,
+  serviceKey: ServiceAccountKey,
 ): Promise<CalendarCredentials | null> {
   const updatedCalendar = await prisma.calendarCredentials.update({
     where: {
       id: credentialID,
     },
     data: {
-      appToken: appToken as unknown as any,
-    },
-  });
-  return updatedCalendar;
-}
-
-export async function updateCalendarAuthToken(
-  credentialID: number,
-  authToken: string,
-): Promise<CalendarCredentials | null> {
-  const updatedCalendar = await prisma.calendarCredentials.update({
-    where: {
-      id: credentialID,
-    },
-    data: {
-      authToken: authToken,
+      serviceAccountKey: serviceKey as unknown as any,
     },
   });
   return updatedCalendar;
